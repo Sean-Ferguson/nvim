@@ -58,8 +58,9 @@ vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'move line down' })
 vim.keymap.set('v', 'K', ":m '>-2<CR>gv=gv")
 
 vim.keymap.set('n', '<leader>q', '<cmd>q!<cr>', { desc = 'quit without saving' })
-vim.keymap.set('n', '<leader>x', '<cmd>update<cr><cmd>q<cr>')
-vim.keymap.set('n', '<leader>m', '<cmd>!make<cr>')
+vim.keymap.set('n', '<leader>w', '<cmd>w<cr>', { desc = 'write' })
+vim.keymap.set('n', '<leader>x', '<cmd>update<cr><cmd>q<cr>', { desc = 'save and quit' })
+vim.keymap.set('n', '<leader>m', '<cmd>update<cr><cmd>!make --keep-going<cr>', { desc = 'make' })
 
 vim.keymap.set('n', 'Q', 'q', opts)
 vim.keymap.set('n', 'q', '<Nop>')
@@ -158,6 +159,8 @@ require('lazy').setup({
     },
     {
         'neovim/nvim-lspconfig',
+        event = { 'BufReadPre', 'BufNewFile' },
+        -- cmd = { 'LspInfo' },
         dependencies = {
             'williamboman/mason.nvim',
             'williamboman/mason-lspconfig.nvim',
@@ -187,16 +190,17 @@ require('lazy').setup({
             })
 
             mason_tool_installer.setup({
-                ensure_installed = { 'luacheck', 'stylua' },
+                ensure_installed = { 'luacheck', 'stylua', 'shellcheck', 'shfmt', 'cpplint', 'clang-format' },
             })
 
             require('neodev').setup({})
 
             require('mason-lspconfig').setup({
-                ensure_installed = { 'lua_ls' },
+                ensure_installed = { 'lua_ls', 'bashls', 'clangd' },
                 handlers = {
                     function(server_name)
-                        print('setting up ', server_name)
+                        -- print('setting up ', server_name)
+                        -- lazy load this stuff
                         require('lspconfig')['lua_ls'].setup({
                             -- settings = {
                             --     Lua = {
@@ -206,6 +210,28 @@ require('lazy').setup({
                             --         },
                             --     },
                             -- },
+                        })
+                        require('lspconfig')['bashls'].setup({
+                            -- vim.api.nvim_create_autocmd('FileType', {
+                            --     pattern = 'sh',
+                            --     callback = function()
+                            --         vim.lsp.start({
+                            --             name = 'bash-language-server',
+                            --             cmd = { 'bash-language-server', 'start' },
+                            --         })
+                            --     end,
+                            -- }),
+                        })
+                        require('lspconfig')['clangd'].setup({
+                            -- vim.api.nvim_create_autocmd('FileType', {
+                            --     pattern = 'sh',
+                            --     callback = function()
+                            --         vim.lsp.start({
+                            --             name = 'bash-language-server',
+                            --             cmd = { 'bash-language-server', 'start' },
+                            --         })
+                            --     end,
+                            -- }),
                         })
                     end,
                 },
@@ -229,7 +255,9 @@ require('lazy').setup({
                     ['<C-f>'] = cmp.mapping.scroll_docs(4),
                     ['<C-Space>'] = cmp.mapping.complete(),
                     ['<C-e>'] = cmp.mapping.abort(),
-                    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+
+                    -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items
+                    ['<CR>'] = cmp.mapping.confirm({ select = true }),
                 }),
                 sources = cmp.config.sources({
                     { name = 'nvim_lsp' },
@@ -244,7 +272,7 @@ require('lazy').setup({
         config = function()
             local lint = require('lint')
 
-            lint.linters_by_ft = { lua = { 'luacheck' } }
+            lint.linters_by_ft = { lua = { 'luacheck' }, sh = { 'shellcheck' }, c = { 'cpplint' }, cpp = { 'cpplint' } }
 
             local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
 
@@ -259,7 +287,7 @@ require('lazy').setup({
                 end,
             })
 
-            vim.keymap.set('n', '<leader>l', function()
+            vim.keymap.set('n', '<leader>L', function()
                 lint.try_lint()
             end, { desc = 'Trigger linting for current file' })
         end,
@@ -273,6 +301,9 @@ require('lazy').setup({
             conform.setup({
                 formatters_by_ft = {
                     lua = { 'stylua' },
+                    sh = { 'shfmt' },
+                    c = { 'clang-format' },
+                    cpp = { 'clang-format' },
                     -- python = { "isort", "black" },
                 },
                 format_on_save = {
@@ -282,7 +313,7 @@ require('lazy').setup({
                 },
             })
 
-            vim.keymap.set({ 'n', 'v' }, '<leader>mp', function()
+            vim.keymap.set({ 'n', 'v' }, '<leader>F', function()
                 conform.format({
                     lsp_fallback = true,
                     async = false,
