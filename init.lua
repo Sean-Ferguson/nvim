@@ -16,6 +16,9 @@ vim.opt.relativenumber = true
 vim.opt.scrolloff = 8
 vim.opt.timeoutlen = 100
 
+-- :intro to see startupscreen for some reason whichkey verylazy messes it up for me
+vim.opt.shortmess:append({ I = true })
+
 vim.opt.wrap = false
 
 vim.opt.splitright = true
@@ -260,6 +263,7 @@ require('lazy').setup({
                 }),
                 sources = cmp.config.sources({
                     { name = 'nvim_lsp' },
+                    { name = 'path', keyword_length = 0 },
                     { name = 'luasnip' },
                 }, { { name = 'buffer' } }),
             })
@@ -321,4 +325,5 @@ require('lazy').setup({
             end, { desc = 'Format file or range (in visual mode)' })
         end,
     },
+    { 'lukas-reineke/indent-blankline.nvim', main = 'ibl', opts = {} },
 })
