@@ -192,13 +192,22 @@ require('lazy').setup({
             })
 
             mason_tool_installer.setup({
-                ensure_installed = { 'luacheck', 'stylua', 'shellcheck', 'shfmt', 'cpplint', 'clang-format' },
+                ensure_installed = {
+                    'luacheck',
+                    'stylua',
+                    'shellcheck',
+                    'shfmt',
+                    'cpplint',
+                    'clang-format',
+                    'flake8',
+                    'blue',
+                },
             })
 
             require('neodev').setup({})
 
             require('mason-lspconfig').setup({
-                ensure_installed = { 'lua_ls', 'bashls', 'clangd' },
+                ensure_installed = { 'lua_ls', 'bashls', 'clangd', 'pylsp' },
                 handlers = {
                     function(server_name)
                         -- print('setting up ', server_name)
@@ -234,6 +243,16 @@ require('lazy').setup({
                             --         })
                             --     end,
                             -- }),
+                        })
+                        require('lspconfig')['pylsp'].setup({
+                            -- settings = {
+                            --     pylsp = {
+                            --         pyflakes = { enabled = false },
+                            --         pylint = { enabled = false },
+                            --         pycodestyle = { enabled = 'false' },
+                            --         flake8 = { enabled = 'false' },
+                            --     },
+                            -- },
                         })
                     end,
                 },
@@ -275,7 +294,13 @@ require('lazy').setup({
         config = function()
             local lint = require('lint')
 
-            lint.linters_by_ft = { lua = { 'luacheck' }, sh = { 'shellcheck' }, c = { 'cpplint' }, cpp = { 'cpplint' } }
+            lint.linters_by_ft = {
+                lua = { 'luacheck' },
+                sh = { 'shellcheck' },
+                c = { 'cpplint' },
+                cpp = { 'cpplint' },
+                python = { 'flake8' },
+            }
 
             local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
 
@@ -308,6 +333,7 @@ require('lazy').setup({
                     c = { 'clang-format' },
                     cpp = { 'clang-format' },
                     -- python = { "isort", "black" },
+                    python = { 'blue' },
                 },
                 format_on_save = {
                     lsp_fallback = true,
@@ -326,4 +352,10 @@ require('lazy').setup({
         end,
     },
     { 'lukas-reineke/indent-blankline.nvim', main = 'ibl', opts = {} },
+    {
+        'fladson/vim-kitty',
+        event = { 'BufReadPre', 'BufNewFile' },
+    },
+    -- this one is a bit shady
+    { 'kovetskiy/sxhkd-vim', event = { 'BufReadPre', 'BufNewFile' } },
 })
