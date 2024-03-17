@@ -1,1 +1,5 @@
-vim.cmd([[colorscheme tokyonight-night]])
+-- vim.cmd.colorscheme('onedark_vivid')
+-- vim.cmd.colorscheme('onedark_dark')
+vim.cmd.colorscheme('tokyonight-night')
+-- vim.cmd.colorscheme('kanagawa')
+-- vim.cmd.colorscheme('kanagawa-dragon')

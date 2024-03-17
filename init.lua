@@ -3,17 +3,22 @@ vim.g.loaded_ruby_provider = 0
 vim.g.loaded_node_provider = 0
 vim.g.loaded_perl_provider = 0
 
+vim.g.netrw_banner = 0
+
 vim.opt.backup = false
 vim.opt.swapfile = false
 vim.opt.showmode = false
 
 vim.opt.smartindent = true
 vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
 
 vim.opt.number = true
 vim.opt.relativenumber = true
 
-vim.opt.scrolloff = 8
+-- vim.opt.scrolloff = 8
+vim.opt.scrolloff = 999
 vim.opt.timeoutlen = 100
 
 -- :intro to see startupscreen for some reason whichkey verylazy messes it up for me
@@ -21,15 +26,14 @@ vim.opt.shortmess:append({ I = true })
 
 vim.opt.wrap = false
 
-vim.opt.splitright = true
 vim.opt.splitbelow = true
-
-vim.g.netrw_banner = 0
+vim.opt.splitright = true
 
 vim.opt.smartcase = true
 vim.opt.ignorecase = true
 -- TODO i think i would like to highlight then turn it off
--- vim.opt.hlsearch = false
+vim.opt.hlsearch = false
+vim.opt.inccommand = 'split'
 
 vim.opt.laststatus = 3
 
@@ -37,19 +41,19 @@ vim.opt.laststatus = 3
 vim.opt.termguicolors = true
 
 -- copy handled by kitty "control-c"
--- "control-v" to paste
+-- "control-y" to paste emacs style
 vim.opt.clipboard = 'unnamedplus'
 -- seems i dont need anything else?? do i need registers?
 vim.opt.mouse = 'a'
 vim.opt.mousefocus = true
 
-vim.opt.shiftwidth = 4
-vim.opt.tabstop = 4
+vim.opt.virtualedit = 'block'
 
 vim.g.mapleader = ' '
-vim.g.maplocalleader = ',' -- what is this?
+vim.g.maplocalleader = ' ' -- what is this?
+-- vim.g.maplocalleader = ',' -- what is this?
 
--- SF i forget about this
+-- SF i forgot about this
 local opts = { noremap = true }
 
 vim.keymap.set('n', ';', ':', opts)
@@ -58,9 +62,9 @@ vim.keymap.set('v', ';', ':', opts)
 -- move lines, this is pretty nice
 -- TODO get this desc thing down for whichkey
 vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'move line down' })
-vim.keymap.set('v', 'K', ":m '>-2<CR>gv=gv")
+vim.keymap.set('v', 'K', ":m '>-2<CR>gv=gv", { desc = 'move line up' })
 
-vim.keymap.set('n', '<leader>q', '<cmd>q!<cr>', { desc = 'quit without saving' })
+vim.keymap.set('n', '<leader>q', '<cmd>qa!<cr>', { desc = 'quit without saving' })
 vim.keymap.set('n', '<leader>w', '<cmd>w<cr>', { desc = 'write' })
 vim.keymap.set('n', '<leader>x', '<cmd>update<cr><cmd>q<cr>', { desc = 'save and quit' })
 vim.keymap.set('n', '<leader>m', '<cmd>update<cr><cmd>!make --keep-going<cr>', { desc = 'make' })
@@ -71,7 +75,14 @@ vim.keymap.set('n', 'q', '<Nop>')
 -- whats going on here?
 -- local autocmd = vim.api.nvim_create_autocmd
 -- local yank_group = augroup("HighlightYank", {})
-vim.cmd([[au TextYankPost * silent! lua vim.highlight.on_yank()]])
+-- vim.cmd([[au TextYankPost * silent! lua vim.highlight.on_yank()]])
+vim.api.nvim_create_autocmd('TextYankPost', {
+    desc = 'Highlight when yanking (copying) text',
+    group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+    callback = function()
+        vim.highlight.on_yank()
+    end,
+})
 
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
@@ -97,11 +108,37 @@ require('lazy').setup({
         end,
     },
     {
+        'olimorris/onedarkpro.nvim',
+        -- lazy = false,
+        -- priority = 1000, -- Ensure it loads first
+        -- config = function()
+        --     require('onedarkpro').setup({
+        --         highlights = {
+        --             -- Comment = { bold = true },
+        --             Comment = { italic = true },
+        --             Directory = { bold = true },
+        --             ErrorMsg = { italic = true, bold = true },
+        --         },
+        --     })
+        --     require('current-theme')
+        -- end,
+    },
+    {
+        'rebelot/kanagawa.nvim',
+        -- lazy = false, -- make sure we load this during startup if it is your main colorscheme
+        -- priority = 1000, -- make sure to load this before all the other start plugins
+        -- config = function()
+        --     require('current-theme')
+        -- end,
+    },
+    {
         'nvim-lualine/lualine.nvim',
         dependencies = { 'nvim-tree/nvim-web-devicons' },
         opts = {
             options = {
                 theme = 'auto',
+                -- theme = 'tokyonight',
+                -- theme = 'kanagawa',
                 component_separators = { left = '', right = '' },
                 section_separators = { left = '', right = '' },
             },
@@ -118,12 +155,69 @@ require('lazy').setup({
                 ignore_install = {},
                 highlight = {
                     enable = true,
-                    additional_vim_regex_highlighting = false,
+                    -- additional_vim_regex_highlighting = false,
                 },
                 modules = {}, -- SF not too sure about this one, fixes linting error
+
+                incremental_selection = {
+                    enable = true,
+                    keymaps = {
+                        -- init_selection = 'gnn', -- set to `false` to disable one of the mappings
+                        -- node_incremental = 'grn',
+                        -- scope_incremental = 'grc',
+                        -- node_decremental = 'grm',
+                        init_selection = '<leader>ss', -- set to `false` to disable one of the mappings
+                        node_incremental = '<leader>si',
+                        scope_incremental = '<leader>sc',
+                        node_decremental = '<leader>sd',
+                    },
+                },
+                textobjects = {
+                    select = {
+                        enable = true,
+
+                        -- Automatically jump forward to textobj, similar to targets.vim
+                        lookahead = true,
+
+                        keymaps = {
+                            -- You can use the capture groups defined in textobjects.scm
+                            ['af'] = '@function.outer',
+                            ['if'] = '@function.inner',
+                            ['ac'] = '@class.outer',
+                            -- You can optionally set descriptions to the mappings (used in the desc parameter of
+                            -- nvim_buf_set_keymap) which plugins like which-key display
+                            ['ic'] = { query = '@class.inner', desc = 'Select inner part of a class region' },
+                            -- You can also use captures from other query groups like `locals.scm`
+                            ['as'] = { query = '@scope', query_group = 'locals', desc = 'Select language scope' },
+                        },
+                        -- You can choose the select mode (default is charwise 'v')
+                        --
+                        -- Can also be a function which gets passed a table with the keys
+                        -- * query_string: eg '@function.inner'
+                        -- * method: eg 'v' or 'o'
+                        -- and should return the mode ('v', 'V', or '<c-v>') or a table
+                        -- mapping query_strings to modes.
+                        selection_modes = {
+                            ['@parameter.outer'] = 'v', -- charwise
+                            ['@function.outer'] = 'V', -- linewise
+                            ['@class.outer'] = '<c-v>', -- blockwise
+                        },
+                        -- If you set this to `true` (default is `false`) then any textobject is
+                        -- extended to include preceding or succeeding whitespace. Succeeding
+                        -- whitespace has priority in order to act similarly to eg the built-in
+                        -- `ap`.
+                        --
+                        -- Can also be a function which gets passed a table with the keys
+                        -- * query_string: eg '@function.inner'
+                        -- * selection_mode: eg 'v'
+                        -- and should return true or false
+                        include_surrounding_whitespace = true,
+                    },
+                },
             })
         end,
     },
+    { 'nvim-treesitter/nvim-treesitter-textobjects' },
     {
         'numToStr/Comment.nvim',
         opts = {
@@ -157,7 +251,11 @@ require('lazy').setup({
         -- lazy = true,
         dependencies = { 'nvim-lua/plenary.nvim' },
         cmd = 'Telescope',
-        keys = { { '<leader>ff', '<cmd>Telescope find_files<cr>' } },
+        keys = {
+            { '<leader>ff', '<cmd>Telescope find_files<cr>' },
+            { '<leader>fh', '<cmd>Telescope help_tags<cr>' },
+            { '<leader>f/', '<cmd>Telescope current_buffer_fuzzy_find<cr>' },
+        },
     },
     {
         'neovim/nvim-lspconfig',
@@ -358,4 +456,10 @@ require('lazy').setup({
     },
     -- this one is a bit shady
     { 'kovetskiy/sxhkd-vim', event = { 'BufReadPre', 'BufNewFile' } },
+    {
+        'norcalli/nvim-colorizer.lua',
+        config = function()
+            require('colorizer').setup()
+        end,
+    },
 })
